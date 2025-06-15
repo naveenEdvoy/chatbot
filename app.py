@@ -1,8 +1,6 @@
 import streamlit as st
 import requests
 import uuid
-import json
-
 
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 st.title("Genie 🎓 Study Abroad Assistant")
@@ -59,7 +57,9 @@ if st.session_state.task_id:
     response_placeholder = st.empty()
     response_placeholder.markdown("*Genie is typing...*")
     
-    try:        
+    try:
+        import json
+        
         with requests.get(
             f"https://chatbot.loca.lt/chat-bot/chat-stream/{st.session_state.task_id}",
             stream=True,
