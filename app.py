@@ -1,3 +1,4 @@
+import json
 import streamlit as st
 import requests
 import uuid
@@ -58,8 +59,6 @@ if st.session_state.task_id:
     response_placeholder.markdown("*Genie is typing...*")
     
     try:
-        import json
-        
         with requests.get(
             f"https://chatbot.loca.lt/chat-bot/chat-stream/{st.session_state.task_id}",
             stream=True,
@@ -74,6 +73,7 @@ if st.session_state.task_id:
                     try:
                         # Parse each line as JSON
                         chunk_data = json.loads(line)
+                        response_placeholder.markdown(f"**Genie:** {chunk_data}")
                         
                         # Only process content_chunk messages
                         if chunk_data.get("type") == "content_chunk":
@@ -85,9 +85,13 @@ if st.session_state.task_id:
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
                         continue
+                    # chunk = line.lstrip("data: ")
+                    # full_response += chunk
+                    # # Update the placeholder with accumulated response
+                    # response_placeholder.markdown(f"**Genie:** {full_response}")
             
             # Add complete response to history and clear task
-            if full_response.strip():
+            if full_response:
                 st.session_state.history.append({"sender": "genie", "text": full_response})
             
         # Clear task and rerun to show final state
