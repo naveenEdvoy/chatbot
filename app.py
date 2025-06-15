@@ -13,7 +13,7 @@ if "history" not in st.session_state:
 query = st.text_input("You:", key="user_input")
 if st.button("Send") and query:
     res = requests.post(
-        "http://localhost:4110/chatbot/chat",
+        "https://chatbot.loca.lt/chatbot/chat",
         json={"user_id": st.session_state.session_id, "query": query}
     )
     res.raise_for_status()
@@ -27,7 +27,7 @@ for entry in st.session_state.history:
 
 if "task_id" in st.session_state:
     buffer = ""
-    r = requests.get(f"http://localhost:4110/chatbot/chat-stream/{st.session_state.task_id}", stream=True)
+    r = requests.get(f"https://chatbot.loca.lt/chatbot/chat-stream/{st.session_state.task_id}", stream=True)
     for line in r.iter_lines(decode_unicode=True):
         if line:
             chunk = line.lstrip("data: ")
