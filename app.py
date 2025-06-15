@@ -29,7 +29,7 @@ if submitted and query.strip():
         
         # Make API call
         resp = requests.post(
-            "https://chatbot.loca.lt/chat-bot/chat",
+            "https://api-dev.edvoy.com/chat-bot/chat",
             json={"session_id": st.session_state.session_id, "message": query},
             timeout=10
         )
@@ -60,7 +60,7 @@ if st.session_state.task_id:
     
     try:
         with requests.get(
-            f"https://chatbot.loca.lt/chat-bot/chat-stream/{st.session_state.task_id}",
+            f"https://api-dev.edvoy.com/chat-bot/chat-stream/{st.session_state.task_id}",
             stream=True,
             timeout=30
         ) as resp:
