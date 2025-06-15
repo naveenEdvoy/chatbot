@@ -14,7 +14,7 @@ query = st.text_input("You:", key="user_input")
 if st.button("Send") and query:
     res = requests.post(
         "https://chatbot.loca.lt/chat-bot/chat",
-        json={"user_id": st.session_state.session_id, "query": query}
+        json={"session_id": st.session_state.session_id, "message": query}
     )
     res.raise_for_status()
     st.session_state.history.append({"sender": "user", "text": query})
