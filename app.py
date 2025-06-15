@@ -23,7 +23,7 @@ if st.button("Send") and query.strip():
     resp.raise_for_status()
     st.session_state.history.append({"sender": "user", "text": query})
     st.session_state.task_id = resp.json().get("task_id")
-    st.session_state.query = ""  # clear input
+    st.session_state["query"] = ""  # clear input
 
 # Display chat history
 for entry in st.session_state.history:
