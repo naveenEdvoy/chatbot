@@ -2,7 +2,10 @@ import json
 import streamlit as st
 import requests
 import uuid
+import os
 
+CHATBOT_SERVICE_URL = os.getenv("CHATBOT_URL", "https://api-dev.edvoy.com")
+    
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 st.title("Genie 🎓 Study Abroad Assistant")
 
@@ -29,7 +32,7 @@ if submitted and query.strip():
         
         # Make API call
         resp = requests.post(
-            "https://api-dev.edvoy.com/chat-bot/chat",
+            f"{CHATBOT_SERVICE_URL}/chat-bot/chat",
             json={"session_id": st.session_state.session_id, "message": query},
             timeout=10
         )
@@ -60,7 +63,7 @@ if st.session_state.task_id:
     
     try:
         with requests.get(
-            f"https://api-dev.edvoy.com/chat-bot/chat-stream/{st.session_state.task_id}",
+            f"{CHATBOT_SERVICE_URL}/chat-bot/chat-stream/{st.session_state.task_id}",
             stream=True,
             timeout=30
         ) as resp:
