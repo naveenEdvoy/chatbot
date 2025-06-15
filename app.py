@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import uuid
+import json
+
 
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 st.title("Genie 🎓 Study Abroad Assistant")
@@ -57,7 +59,7 @@ if st.session_state.task_id:
     response_placeholder = st.empty()
     response_placeholder.markdown("*Genie is typing...*")
     
-    try:
+    try:        
         with requests.get(
             f"https://chatbot.loca.lt/chat-bot/chat-stream/{st.session_state.task_id}",
             stream=True,
@@ -68,14 +70,24 @@ if st.session_state.task_id:
             
             # Stream the response
             for line in resp.iter_lines(decode_unicode=True):
-                if line:
-                    chunk = line.lstrip("data: ")
-                    full_response += chunk
-                    # Update the placeholder with accumulated response
-                    response_placeholder.markdown(f"**Genie:** {full_response}")
+                if line.strip():
+                    try:
+                        # Parse each line as JSON
+                        chunk_data = json.loads(line)
+                        
+                        # Only process content_chunk messages
+                        if chunk_data.get("type") == "content_chunk":
+                            text_chunk = chunk_data.get("text_chunk", "")
+                            full_response += text_chunk
+                            # Update the placeholder with accumulated response
+                            response_placeholder.markdown(f"**Genie:** {full_response}")
+                            
+                    except json.JSONDecodeError:
+                        # Skip malformed JSON lines
+                        continue
             
             # Add complete response to history and clear task
-            if full_response:
+            if full_response.strip():
                 st.session_state.history.append({"sender": "genie", "text": full_response})
             
         # Clear task and rerun to show final state
