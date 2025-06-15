@@ -69,12 +69,12 @@ if st.session_state.task_id:
             
             # Stream the response
             for line in resp.iter_lines(decode_unicode=True):
-                if line.strip():
+                if line:
                     try:
+
+                        data = line.lstrip("data: ")
                         # Parse each line as JSON
-                        chunk_data = json.loads(line)
-                        response_placeholder.markdown(f"**Genie:** {chunk_data}")
-                        
+                        chunk_data = json.loads(data)                        
                         # Only process content_chunk messages
                         if chunk_data.get("type") == "content_chunk":
                             text_chunk = chunk_data.get("text_chunk", "")
