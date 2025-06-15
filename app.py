@@ -14,7 +14,7 @@ if "task_id" not in st.session_state:
     st.session_state.task_id = None
 
 # Input and Send button logic
-query = st.text_input("You:", key="query")
+query = st.text_input("You:", key="user_input")
 if st.button("Send") and query.strip():
     resp = requests.post(
         "https://chatbot.loca.lt/chat-bot/chat",
@@ -23,7 +23,7 @@ if st.button("Send") and query.strip():
     resp.raise_for_status()
     st.session_state.history.append({"sender": "user", "text": query})
     st.session_state.task_id = resp.json().get("task_id")
-    st.session_state["query"] = ""  # clear input
+    st.session_state["user_input"] = ""  # clear input
 
 # Display chat history
 for entry in st.session_state.history:
