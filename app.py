@@ -15,54 +15,76 @@ if "task_id" not in st.session_state:
 if "input_counter" not in st.session_state:
     st.session_state.input_counter = 0
 
-# Input and Send button logic
-query = st.text_input("You:", key=f"user_input_{st.session_state.input_counter}")
-if st.button("Send") and query.strip():
+# Create a form for better handling of input clearing
+with st.form(key="chat_form", clear_on_submit=True):
+    query = st.text_input("You:", key="user_input")
+    submitted = st.form_submit_button("Send")
+
+# Handle form submission
+if submitted and query.strip():
     try:
+        # Add user message to history immediately
+        st.session_state.history.append({"sender": "user", "text": query})
+        
+        # Make API call
         resp = requests.post(
             "https://chatbot.loca.lt/chat-bot/chat",
-            json={"session_id": st.session_state.session_id, "message": query}
+            json={"session_id": st.session_state.session_id, "message": query},
+            timeout=10
         )
         resp.raise_for_status()
-        st.session_state.history.append({"sender": "user", "text": query})
         st.session_state.task_id = resp.json().get("task_id")
-        # Increment counter to create new input field (effectively clearing it)
-        st.session_state.input_counter += 1
-        st.rerun()  # Rerun to refresh the input field
-    except requests.RequestException as e:
+        st.rerun()
+        
+    except requests.exceptions.RequestException as e:
         st.error(f"Error sending message: {e}")
+        # Remove the user message from history if API call failed
+        if st.session_state.history and st.session_state.history[-1]["sender"] == "user":
+            st.session_state.history.pop()
 
 # Display chat history
-for entry in st.session_state.history:
-    prefix = "**You:**" if entry["sender"] == "user" else "**Genie:**"
-    st.markdown(f"{prefix} {entry['text']}")
+chat_container = st.container()
+with chat_container:
+    for entry in st.session_state.history:
+        if entry["sender"] == "user":
+            st.markdown(f"**You:** {entry['text']}")
+        else:
+            st.markdown(f"**Genie:** {entry['text']}")
 
-# If there's an ongoing task, stream the response
+# Handle streaming response
 if st.session_state.task_id:
-    placeholder = st.empty()
-    placeholder.markdown("*Genie is typing...*")
+    # Create a placeholder for the streaming response
+    response_placeholder = st.empty()
+    response_placeholder.markdown("*Genie is typing...*")
     
     try:
         with requests.get(
             f"https://chatbot.loca.lt/chat-bot/chat-stream/{st.session_state.task_id}",
-            stream=True
+            stream=True,
+            timeout=30
         ) as resp:
             resp.raise_for_status()
             full_response = ""
             
+            # Stream the response
             for line in resp.iter_lines(decode_unicode=True):
                 if line:
                     chunk = line.lstrip("data: ")
                     full_response += chunk
-                    # Update the placeholder with the accumulated response
-                    placeholder.markdown(f"**Genie:** {full_response}")
+                    # Update the placeholder with accumulated response
+                    response_placeholder.markdown(f"**Genie:** {full_response}")
             
-            # Add the complete response to history
-            st.session_state.history.append({"sender": "genie", "text": full_response})
-            # Clear the task_id and rerun to show final state
-            st.session_state.task_id = None
-            st.rerun()
-
+            # Add complete response to history and clear task
+            if full_response:
+                st.session_state.history.append({"sender": "genie", "text": full_response})
+            
+        # Clear task and rerun to show final state
+        st.session_state.task_id = None
+        st.rerun()
+            
+    except requests.exceptions.RequestException as e:
+        response_placeholder.error(f"Error streaming response: {e}")
+        st.session_state.task_id = None
     except Exception as e:
-        st.error(f"Error streaming response: {e}")
+        response_placeholder.error(f"Unexpected error: {e}")
         st.session_state.task_id = None
