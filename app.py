@@ -4,7 +4,9 @@ import requests
 import uuid
 import os
 
-CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
+# CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
+CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
+
     
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 st.title("Genie 🎓 Study Abroad Assistant")
