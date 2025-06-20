@@ -10,25 +10,116 @@ CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
 
 def render_search_results(sources):
     st.subheader("🎓 Recommended Courses & Universities")
+    
+    # Custom CSS for course cards
+    st.markdown("""
+    <style>
+    .course-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 10px 0;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    .course-title {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #ffffff;
+    }
+    .course-university {
+        font-size: 1.1em;
+        margin-bottom: 8px;
+        color: #f0f0f0;
+    }
+    .course-location {
+        font-size: 1em;
+        margin-bottom: 15px;
+        color: #e0e0e0;
+    }
+    .course-link {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background 0.3s ease;
+    }
+    .course-link:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     for source in sources:
         institution = source.get("institution", {})
         address = institution.get("address", {})
-        with st.container():
-            st.markdown(
-                f"""
-                <div style="padding: 1rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 10px;">
-                    <h4 style="margin-bottom: 0.3rem;">{source.get("name", "Course Title")}</h4>
-                    <p style="margin: 0.2rem 0;"><strong>University:</strong> {institution.get("name", "Unknown")}</p>
-                    <p style="margin: 0.2rem 0;"><strong>Location:</strong> {address.get('country', 'N/A')}</p>
-                    <a href="#" target="_blank" style="color: #1f77b4;">View Course ↗</a>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        course_name = source.get("name", "Course Title")
+        university_name = institution.get("name", "Unknown University")
+        location = address.get('country', 'N/A')
+        course_url = source.get("url", "#")
+        
+        # Render each course card
+        st.markdown(f"""
+        <div class="course-card">
+            <div class="course-title">{course_name}</div>
+            <div class="course-university">🏛️ University: {university_name}</div>
+            <div class="course-location">📍 Location: {location}</div>
+            <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
+        </div>
+        """, unsafe_allow_html=True)
 
     
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
-st.title("Genie 🎓 Study Abroad Assistant")
+
+# Add some custom styling for the main app
+st.markdown("""
+<style>
+.main-header {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.chat-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.user-message {
+    background: #f0f8ff;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+    border-left: 4px solid #667eea;
+}
+.genie-message {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+    border-left: 4px solid #764ba2;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<h1 class="main-header">Genie 🎓 Study Abroad Assistant</h1>', unsafe_allow_html=True)
 
 # Initialize session vars
 if "session_id" not in st.session_state:
@@ -42,8 +133,10 @@ if "input_counter" not in st.session_state:
 
 # Create a form for better handling of input clearing
 with st.form(key="chat_form", clear_on_submit=True):
-    query = st.text_input("You:", key="user_input")
-    submitted = st.form_submit_button("Send")
+    query = st.text_input("Ask me anything about studying abroad:", key="user_input", placeholder="e.g., I want to study Computer Science in Canada")
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        submitted = st.form_submit_button("Send 🚀", use_container_width=True)
 
 # Handle form submission
 if submitted and query.strip():
@@ -68,19 +161,21 @@ if submitted and query.strip():
             st.session_state.history.pop()
 
 # Display chat history
-chat_container = st.container()
-with chat_container:
-    for entry in st.session_state.history:
-        if entry["sender"] == "user":
-            st.markdown(f"**You:** {entry['text']}")
-        else:
-            st.markdown(f"**Genie:** {entry['text']}")
+if st.session_state.history:
+    st.subheader("💬 Chat History")
+    chat_container = st.container()
+    with chat_container:
+        for entry in st.session_state.history:
+            if entry["sender"] == "user":
+                st.markdown(f'<div class="user-message"><strong>You:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="genie-message"><strong>Genie:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
 
 # Handle streaming response
 if st.session_state.task_id:
     # Create a placeholder for the streaming response
     response_placeholder = st.empty()
-    response_placeholder.markdown("*Genie is typing...*")
+    response_placeholder.markdown("*🧞‍♂️ Genie is thinking...*")
     
     try:
         with requests.get(
@@ -95,7 +190,6 @@ if st.session_state.task_id:
             for line in resp.iter_lines(decode_unicode=True):
                 if line:
                     try:
-
                         data = line.lstrip("data: ")
                         # Parse each line as JSON
                         chunk_data = json.loads(data)                        
@@ -104,7 +198,7 @@ if st.session_state.task_id:
                             text_chunk = chunk_data.get("text_chunk", "")
                             full_response += text_chunk
                             # Update the placeholder with accumulated response
-                            response_placeholder.markdown(f"**Genie:** {full_response}")
+                            response_placeholder.markdown(f'<div class="genie-message"><strong>Genie:</strong> {full_response}</div>', unsafe_allow_html=True)
                         if chunk_data.get("type") == "ai_response_completed" and chunk_data.get("flow_stage") == "READY_FOR_SEARCH":
                             sources = chunk_data.get("data", {}).get("sources", [])
                             if sources:
