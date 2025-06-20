@@ -11,14 +11,16 @@ CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
 def render_search_results(sources):
     st.subheader("🎓 Recommended Courses & Universities")
     for source in sources:
+        institution = source.get("institution", {})
+        address = institution.get("address", {})
         with st.container():
             st.markdown(
                 f"""
                 <div style="padding: 1rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 10px;">
-                    <h4 style="margin-bottom: 0.3rem;">{source.get("title", "Course Title")}</h4>
-                    <p style="margin: 0.2rem 0;"><strong>University:</strong> {source.get("university", "Unknown")}</p>
-                    <p style="margin: 0.2rem 0;"><strong>Location:</strong> {source.get("location", "N/A")}</p>
-                    <a href="{source.get("url")}" target="_blank" style="color: #1f77b4;">View Course ↗</a>
+                    <h4 style="margin-bottom: 0.3rem;">{source.get("name", "Course Title")}</h4>
+                    <p style="margin: 0.2rem 0;"><strong>University:</strong> {institution.get("name", "Unknown")}</p>
+                    <p style="margin: 0.2rem 0;"><strong>Location:</strong> {address.get('country', 'N/A')}</p>
+                    <a href="#" target="_blank" style="color: #1f77b4;">View Course ↗</a>
                 </div>
                 """,
                 unsafe_allow_html=True
