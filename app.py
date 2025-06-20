@@ -9,6 +9,7 @@ from streamlit.components.v1 import html
 CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
 
 def render_search_results(sources):
+    st.write("DEBUG sources:", sources)
     st.subheader("🎓 Recommended Courses & Universities")
     
     # Custom CSS for course cards
