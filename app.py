@@ -107,10 +107,8 @@ if st.session_state.task_id:
                             response_placeholder.markdown(f"**Genie:** {full_response}")
                         if chunk_data.get("type") == "ai_response_completed" and chunk_data.get("flow_stage") == "READY_FOR_SEARCH":
                             sources = chunk_data.get("data", {}).get("sources", [])
-                            print("sources",sources)
-                            print("data",chunk_data)
-                            # if sources:
-                            #     render_search_results(sources)
+                            if sources:
+                                render_search_results(sources)
                             
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
