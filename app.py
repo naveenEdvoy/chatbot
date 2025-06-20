@@ -107,6 +107,8 @@ if st.session_state.task_id:
                             response_placeholder.markdown(f"**Genie:** {full_response}")
                         elif data.get("type") == "ai_response_completed":
                             sources = data.get("data", {}).get("sources", [])
+                            print("sources",sources)
+                            print("data",data)
                             if sources:
                                 render_search_results(sources)
                             
