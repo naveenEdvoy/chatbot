@@ -63,20 +63,17 @@ def render_search_results(sources):
     """, unsafe_allow_html=True)
     
     for source in sources:
-        institution = source.get("institution", {})
-        address = institution.get("address", {})
-        course_name = source.get("name", "Course Title")
-        university_name = institution.get("name", "Unknown University")
-        location = address.get('country', 'N/A')
-        course_url = source.get("url", "#")
+        # institution = source.get("institution", {})
+        # address = institution.get("address", {})
+        # course_name = source.get("name", "Course Title")
+        # university_name = institution.get("name", "Unknown University")
+        # location = address.get('country', 'N/A')
+        # course_url = source.get("url", "#")
         
         # Render each course card
         st.markdown(f"""
         <div class="course-card">
-            <div class="course-title">{course_name}</div>
-            <div class="course-university">🏛️ University: {university_name}</div>
-            <div class="course-location">📍 Location: {location}</div>
-            <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
+            {source}
         </div>
         """, unsafe_allow_html=True)
 
@@ -203,7 +200,7 @@ if st.session_state.task_id:
                             # Update the placeholder with accumulated response
                             response_placeholder.markdown(f'<div class="genie-message"><strong>Genie:</strong> {full_response}</div>', unsafe_allow_html=True)
                         if chunk_data.get("type") == "ai_response_completed" and chunk_data.get("flow_stage") == "READY_FOR_SEARCH":
-                            sources = chunk_data.get("data", {}).get("sources", [])
+                            sources = chunk_data["data"].get("sources", [])
                             if sources:
                                 render_search_results(sources)
                             
