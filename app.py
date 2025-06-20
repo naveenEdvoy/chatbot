@@ -105,7 +105,7 @@ if st.session_state.task_id:
                             full_response += text_chunk
                             # Update the placeholder with accumulated response
                             response_placeholder.markdown(f"**Genie:** {full_response}")
-                        elif data.get("type") == "ai_response_completed":
+                        elif data.get("type") == "ai_response_completed" and data.get("flow_stage") == "READY_FOR_SEARCH":
                             sources = data.get("data", {}).get("sources", [])
                             print("sources",sources)
                             print("data",data)
