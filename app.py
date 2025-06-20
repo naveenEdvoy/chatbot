@@ -2,10 +2,27 @@ import json
 import streamlit as st
 import requests
 import uuid
-import os
+from streamlit.components.v1 import html
+
 
 # CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
 CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
+
+def render_search_results(sources):
+    st.subheader("🎓 Recommended Courses & Universities")
+    for source in sources:
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="padding: 1rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 10px;">
+                    <h4 style="margin-bottom: 0.3rem;">{source.get("title", "Course Title")}</h4>
+                    <p style="margin: 0.2rem 0;"><strong>University:</strong> {source.get("university", "Unknown")}</p>
+                    <p style="margin: 0.2rem 0;"><strong>Location:</strong> {source.get("location", "N/A")}</p>
+                    <a href="{source.get("url")}" target="_blank" style="color: #1f77b4;">View Course ↗</a>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
@@ -86,14 +103,15 @@ if st.session_state.task_id:
                             full_response += text_chunk
                             # Update the placeholder with accumulated response
                             response_placeholder.markdown(f"**Genie:** {full_response}")
+                        elif data.get("type") == "final_summary":
+                            if data["data"].get("flow_stage") == "READY_FOR_SEARCH":
+                                sources = data["data"].get("sources", [])
+                                if sources:
+                                    render_search_results(sources)
                             
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
                         continue
-                    # chunk = line.lstrip("data: ")
-                    # full_response += chunk
-                    # # Update the placeholder with accumulated response
-                    # response_placeholder.markdown(f"**Genie:** {full_response}")
             
             # Add complete response to history and clear task
             if full_response:
