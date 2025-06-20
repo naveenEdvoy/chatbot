@@ -108,6 +108,7 @@ st.markdown("""
     border-radius: 10px;
     margin: 10px 0;
     border-left: 4px solid #667eea;
+    color: #000000;
 }
 .genie-message {
     background: #f9f9f9;
@@ -115,6 +116,7 @@ st.markdown("""
     border-radius: 10px;
     margin: 10px 0;
     border-left: 4px solid #764ba2;
+    color: #000000;
 }
 </style>
 """, unsafe_allow_html=True)
