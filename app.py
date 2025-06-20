@@ -105,11 +105,10 @@ if st.session_state.task_id:
                             full_response += text_chunk
                             # Update the placeholder with accumulated response
                             response_placeholder.markdown(f"**Genie:** {full_response}")
-                        elif data.get("type") == "final_summary":
-                            if data["data"].get("flow_stage") == "READY_FOR_SEARCH":
-                                sources = data["data"].get("sources", [])
-                                if sources:
-                                    render_search_results(sources)
+                        elif data.get("type") == "ai_response_completed":
+                            sources = data.get("data", {}).get("sources", [])
+                            if sources:
+                                render_search_results(sources)
                             
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
