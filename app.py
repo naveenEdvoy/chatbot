@@ -6,7 +6,7 @@ from streamlit.components.v1 import html
 
 
 # CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
-CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
+CHATBOT_SERVICE_URL = "https://chatbot.loca.ltjhd"
 
 def render_merged_response(text_response, sources, response_placeholder, intent):
     """Render both text response and sources together. Sources should be HTML strings for proper rendering."""
