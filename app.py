@@ -17,21 +17,25 @@ def render_merged_response(text_response, sources, response_placeholder):
     if sources:
         merged_html += '<div class="sources-section">'
         merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
-        
-        # If you want to test HTML rendering, uncomment the following lines:
-        # sources = [
-        #     '<div class="course-title">MSc Computer Science</div><div class="course-university">University of Toronto</div><a class="course-link" href="https://utoronto.ca">View Course</a>'
-        # ]
+        institution = source.get("institution", {})
+        address = institution.get("address", {})
+        course_name = source.get("name", "Course Title")
+        university_name = institution.get("name", "Unknown University")
+        location = address.get('country', 'N/A')
+        course_url = source.get("url", "#")
 
         course_content = """<div class="course-card">
                 <div class="course-content">
-                    {source}
+                     <div class="course-title">{course_name}</div>
+                    <div class="course-university">🏛️ University: {university_name}</div>
+                    <div class="course-location">📍 Location: {location}</div>
+                    <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
                 </div>
             </div>"""
 
         for i, source in enumerate(sources):
             # source should be a valid HTML string
-            merged_html += course_content.format(source=source)
+            merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
         merged_html += '</div>'
     
     response_placeholder.markdown(merged_html, unsafe_allow_html=True)
