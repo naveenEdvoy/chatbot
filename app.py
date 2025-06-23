@@ -227,7 +227,7 @@ if st.session_state.history:
             else:
                 # Check if this entry has sources to display as well
                 if "sources" in entry:
-                    render_merged_response(entry["text"], entry["sources"], st)
+                    render_merged_response(entry["text"], entry["sources"], st, entry["intent"])
                 else:
                     st.markdown(f'<div class="genie-message"><strong>Genie:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
 
@@ -246,6 +246,7 @@ if st.session_state.task_id:
             resp.raise_for_status()
             full_response = ""
             sources = []
+            intent = ""
             
             # Stream the response
             for line in resp.iter_lines(decode_unicode=True):
@@ -265,8 +266,9 @@ if st.session_state.task_id:
                         # Process ai_response_completed messages
                         elif chunk_data.get("type") == "ai_response_completed":
                             sources = chunk_data["data"].get("sources", [])
+                            intent = chunk_data["data"].intent
                             # Now render both text and sources together
-                            render_merged_response(full_response, sources, response_placeholder)
+                            render_merged_response(full_response, sources, response_placeholder, intent)
                             
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
@@ -275,6 +277,7 @@ if st.session_state.task_id:
             # Add complete response to history with sources and clear task
             if full_response:
                 history_entry = {"sender": "genie", "text": full_response}
+                history_entry["intent"] = intent
                 if sources:
                     history_entry["sources"] = sources
                 st.session_state.history.append(history_entry)
