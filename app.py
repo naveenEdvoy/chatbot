@@ -8,7 +8,7 @@ from streamlit.components.v1 import html
 # CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
 CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
 
-def render_merged_response(text_response, sources, response_placeholder):
+def render_merged_response(text_response, sources, response_placeholder, intent):
     """Render both text response and sources together. Sources should be HTML strings for proper rendering."""
     # Start with the text response
     merged_html = f'<div class="genie-message"><strong>Genie:</strong> {text_response}</div>'
@@ -16,8 +16,6 @@ def render_merged_response(text_response, sources, response_placeholder):
     # Add sources if they exist
     if sources:
         merged_html += '<div class="sources-section">'
-        merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
-
         course_content = """<div class="course-card">
                 <div class="course-content">
                      <div class="course-title">{course_name}</div>
@@ -26,16 +24,28 @@ def render_merged_response(text_response, sources, response_placeholder):
                     <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
                 </div>
             </div>"""
+        
+        university_content = """<div class="course-card">
+                <div class="course-content">
+                     <div class="course-title">{university_name}</div>
+                    <div class="course-location">📍 Location: {location}</div>
+                    <a href="{university_url}" target="_blank" class="course-link">View University ↗</a>
+                </div>
+            </div>"""
 
-        for i, source in enumerate(sources):
+        for i, source in enumerate(sources[:5]):
             institution = source.get("institution", {})
             address = institution.get("address", {})
             course_name = source.get("name", "Course Title")
             university_name = institution.get("name", "Unknown University")
             location = address.get('country', 'N/A')
             course_url = source.get("url", f"https://edvoy.com/institutions/{source.get("edpRefId")}/{source.get("courseLevel","").lower()}/{source.get("slug")}/")
+            university_url = source.get("url", f"https://edvoy.com/institutions/{source.get("refId")}/")
             # source should be a valid HTML string
-            merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
+            if intent == "UNIVERSITY_SEARCH":
+                merged_html += university_content.format(university_name=university_name,location=location,university_url=university_url)
+            else:
+                merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
         merged_html += '</div>'
     
     response_placeholder.markdown(merged_html, unsafe_allow_html=True)
