@@ -16,22 +16,26 @@ def render_merged_response(text_response, sources, response_placeholder, intent)
     # Add sources if they exist
     if sources:
         merged_html += '<div class="sources-section">'
-        course_content = """<div class="course-card">
-                <div class="course-content">
-                     <div class="course-title">{course_name}</div>
-                    <div class="course-university">🏛️ University: {university_name}</div>
-                    <div class="course-location">📍 Location: {location}</div>
-                    <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
-                </div>
-            </div>"""
+        course_content = """
+<div class="course-card">
+    <div class="course-content">
+        <div class="course-title">{course_name}</div>
+        <div class="course-university">🏛️ University: {university_name}</div>
+        <div class="course-location">📍 Location: {location}</div>
+        <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
+    </div>
+</div>
+"""
         
-        university_content = """<div class="course-card">
-                <div class="course-content">
-                     <div class="course-title">{university_name}</div>
-                    <div class="course-location">📍 Location: {location}</div>
-                    <a href="{university_url}" target="_blank" class="course-link">View University ↗</a>
-                </div>
-            </div>"""
+        university_content = """
+<div class="course-card">
+    <div class="course-content">
+        <div class="course-title">{university_name}</div>
+        <div class="course-location">📍 Location: {location}</div>
+        <a href="{university_url}" target="_blank" class="course-link">View University ↗</a>
+    </div>
+</div>
+"""
 
         for i, source in enumerate(sources[:5]):
             # source should be a valid HTML string
