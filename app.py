@@ -15,16 +15,23 @@ def render_merged_response(text_response, sources, response_placeholder):
     
     # Add sources if they exist
     if sources:
-        # merged_html += '<div class="sources-section">'
-        # merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
+        merged_html += '<div class="sources-section">'
+        merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
         
-        for source in sources:
+        # Debug: Print sources to see their structure
+        print(f"Number of sources: {len(sources)}")
+        for i, source in enumerate(sources):
+            print(f"Source {i}: {type(source)} - {str(source)[:100]}...")
+            
+            # Each source gets its own course-card div with unique styling
             merged_html += f"""
-            <div class="course-card">
-                {source}
+            <div class="course-card" style="animation-delay: {i * 0.1}s;">
+                <div class="course-content">
+                    {source}
+                </div>
             </div>
             """
-        # merged_html += '</div>'
+        merged_html += '</div>'
     
     response_placeholder.markdown(merged_html, unsafe_allow_html=True)
 
@@ -79,14 +86,45 @@ st.markdown("""
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 15px;
     padding: 20px;
-    margin: 10px 0;
+    margin: 15px 0;
     color: white;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    opacity: 0;
+    animation: slideInUp 0.6s ease forwards;
+    position: relative;
+    overflow: hidden;
 }
 .course-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+.course-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+}
+.course-card:hover::before {
+    left: 100%;
+}
+.course-content {
+    position: relative;
+    z-index: 1;
+}
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 .course-title {
     font-size: 1.5em;
