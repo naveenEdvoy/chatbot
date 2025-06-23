@@ -266,7 +266,7 @@ if st.session_state.task_id:
                         # Process ai_response_completed messages
                         elif chunk_data.get("type") == "ai_response_completed":
                             sources = chunk_data["data"].get("sources", [])
-                            intent = chunk_data["data"].intent
+                            intent = chunk_data["data"].get("intent","")
                             # Now render both text and sources together
                             render_merged_response(full_response, sources, response_placeholder, intent)
                             
