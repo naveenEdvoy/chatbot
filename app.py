@@ -15,7 +15,7 @@ def render_merged_response(text_response, sources, response_placeholder):
     
     # Add sources if they exist
     if sources:
-        merged_html += '<div class="sources-section">'
+        # merged_html += '<div class="sources-section">'
         # merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
         
         for source in sources:
@@ -24,7 +24,7 @@ def render_merged_response(text_response, sources, response_placeholder):
                 {source}
             </div>
             """
-        merged_html += '</div>'
+        # merged_html += '</div>'
     
     response_placeholder.markdown(merged_html, unsafe_allow_html=True)
 
