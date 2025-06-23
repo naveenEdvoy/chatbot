@@ -23,7 +23,7 @@ def render_merged_response(text_response, sources, response_placeholder):
         #     '<div class="course-title">MSc Computer Science</div><div class="course-university">University of Toronto</div><a class="course-link" href="https://utoronto.ca">View Course</a>'
         # ]
 
-        course_content = """<div class="course-card" style="animation-delay: {i * 0.1}s;">
+        course_content = """<div class="course-card">
                 <div class="course-content">
                     {source}
                 </div>
