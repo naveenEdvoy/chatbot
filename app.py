@@ -33,7 +33,7 @@ def render_merged_response(text_response, sources, response_placeholder):
             course_name = source.get("name", "Course Title")
             university_name = institution.get("name", "Unknown University")
             location = address.get('country', 'N/A')
-            course_url = source.get("url", "#")
+            course_url = source.get("url", f"https://edvoy.com/institutions/{source.get("edpRefId")}/{source.get("courseLevel").lowercase()}/{source.get("slug")}/")
             # source should be a valid HTML string
             merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
         merged_html += '</div>'
