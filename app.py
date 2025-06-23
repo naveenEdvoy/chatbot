@@ -31,7 +31,7 @@ def render_merged_response(text_response, sources, response_placeholder):
 
         for i, source in enumerate(sources):
             # source should be a valid HTML string
-            merged_html += course_content.format(source=source)
+            merged_html += course_content.format(source=source,i=i)
         merged_html += '</div>'
     
     response_placeholder.markdown(merged_html, unsafe_allow_html=True)
