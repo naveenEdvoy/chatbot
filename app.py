@@ -40,7 +40,7 @@ def render_merged_response(text_response, sources, response_placeholder, intent)
                 address = source.get("address", {})
                 location = address.get('country', 'N/A')
                 university_url = source.get("url", f"https://edvoy.com/institutions/{source.get("refId")}/")
-                merged_html += university_content.format(university_name=course_name,location=location,university_url=university_url)
+                merged_html += university_content.format(university_name=university_name,location=location,university_url=university_url)
             else:
                 institution = source.get("institution", {})
                 address = institution.get("address", {})
