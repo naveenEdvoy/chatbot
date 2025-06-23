@@ -7,6 +7,17 @@ from streamlit.components.v1 import html
 
 # CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
 CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
+
+def render_search_results(sources, response_placeholder):
+    # response_placeholder.subheader("🎓 Recommended Courses & Universities")
+    
+    for source in sources:        
+        # Render each course card
+        response_placeholder.markdown(f"""
+        <div class="course-card">
+            {source}
+        </div>
+        """, unsafe_allow_html=True)
     
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 
@@ -45,6 +56,50 @@ st.markdown("""
     margin: 10px 0;
     border-left: 4px solid #764ba2;
     color: #000000;
+}
+.course-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 10px 0;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+.course-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+.course-university {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    color: #f0f0f0;
+}
+.course-location {
+    font-size: 1em;
+    margin-bottom: 15px;
+    color: #e0e0e0;
+}
+.course-link {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+.course-link:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -130,74 +185,9 @@ if st.session_state.task_id:
                             # Update the placeholder with accumulated response
                             response_placeholder.markdown(f'<div class="genie-message"><strong>Genie:</strong> {full_response}</div>', unsafe_allow_html=True)
                         if chunk_data.get("type") == "ai_response_completed":
-                            sources = [{'name': 'Manchester Metropolitan University', 'slug': 'manchester-metropolitan-university', 'refId': 'manchester-metropolitan-university', 'logoUrl': 'live/images/institutions/manchester-metropolitan-university.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'London Metropolitan University', 'slug': 'london-metropolitan-university', 'refId': 'london-metropolitan-university', 'logoUrl': 'live/images/institutions/london-metropolitan-university.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'The University of Law', 'slug': 'the-university-of-law', 'refId': 'the-university-of-law', 'logoUrl': 'live/images/institutions/the-university-of-law.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'Cardiff Metropolitan University', 'slug': 'cardiff-metropolitan-university', 'refId': 'cardiff-metropolitan-university', 'logoUrl': 'live/images/institutions/cardiff-metropolitan-university.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'QA Higher Education', 'slug': 'qa-higher-education', 'refId': 'qa-higher-education', 'logoUrl': None, 'address': {'country': 'United Kingdom'}}, {'name': 'Bangor University', 'slug': 'bangor-university', 'refId': 'bangor-university', 'logoUrl': 'live/images/institutions/bangor-university-logo.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'University of Reading', 'slug': 'university-of-reading', 'refId': 'university-of-reading', 'logoUrl': 'live/images/institutions/university-of-reading-new-logo.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'Swansea University', 'slug': 'swansea-university', 'refId': 'swansea-university', 'logoUrl': 'live/images/institutions/swansea-university-logo.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'London South Bank University', 'slug': 'london-south-bank-university', 'refId': 'london-south-bank-university', 'logoUrl': 'live/images/institutions/london-south-bank-university.svg', 'address': {'country': 'United Kingdom'}}, {'name': 'Northumbria University', 'slug': 'northumbria-university', 'refId': 'northumbria-university', 'logoUrl': 'live/images/institutions/Northumbria-University.svg', 'address': {'country': 'United Kingdom'}}] #chunk_data["data"].get("sources", [])
+                            sources = chunk_data["data"].get("sources", [])
                             if sources:
-                                st.write("DEBUG sources:", sources)
-                                st.subheader("🎓 Recommended Courses & Universities")
-                                
-                                # Custom CSS for course cards
-                                st.markdown("""
-                                <style>
-                                .course-card {
-                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                    border-radius: 15px;
-                                    padding: 20px;
-                                    margin: 10px 0;
-                                    color: white;
-                                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                                }
-                                .course-card:hover {
-                                    transform: translateY(-5px);
-                                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-                                }
-                                .course-title {
-                                    font-size: 1.5em;
-                                    font-weight: bold;
-                                    margin-bottom: 10px;
-                                    color: #ffffff;
-                                }
-                                .course-university {
-                                    font-size: 1.1em;
-                                    margin-bottom: 8px;
-                                    color: #f0f0f0;
-                                }
-                                .course-location {
-                                    font-size: 1em;
-                                    margin-bottom: 15px;
-                                    color: #e0e0e0;
-                                }
-                                .course-link {
-                                    display: inline-block;
-                                    background: rgba(255, 255, 255, 0.2);
-                                    color: white;
-                                    padding: 8px 16px;
-                                    border-radius: 20px;
-                                    text-decoration: none;
-                                    font-weight: bold;
-                                    transition: background 0.3s ease;
-                                }
-                                .course-link:hover {
-                                    background: rgba(255, 255, 255, 0.3);
-                                    color: white;
-                                    text-decoration: none;
-                                }
-                                </style>
-                                """, unsafe_allow_html=True)
-                                for source in sources:
-                                    # institution = source.get("institution", {})
-                                    # address = institution.get("address", {})
-                                    # course_name = source.get("name", "Course Title")
-                                    # university_name = institution.get("name", "Unknown University")
-                                    # location = address.get('country', 'N/A')
-                                    # course_url = source.get("url", "#")
-                                    
-                                    # Render each course card
-                                    st.markdown(f"""
-                                    <div class="course-card">
-                                        {source}
-                                    </div>
-                                    """, unsafe_allow_html=True)
+                                render_search_results(sources=sources,response_placeholder=response_placeholder)
                             
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
