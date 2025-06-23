@@ -17,12 +17,6 @@ def render_merged_response(text_response, sources, response_placeholder):
     if sources:
         merged_html += '<div class="sources-section">'
         merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
-        institution = source.get("institution", {})
-        address = institution.get("address", {})
-        course_name = source.get("name", "Course Title")
-        university_name = institution.get("name", "Unknown University")
-        location = address.get('country', 'N/A')
-        course_url = source.get("url", "#")
 
         course_content = """<div class="course-card">
                 <div class="course-content">
@@ -34,6 +28,12 @@ def render_merged_response(text_response, sources, response_placeholder):
             </div>"""
 
         for i, source in enumerate(sources):
+            institution = source.get("institution", {})
+            address = institution.get("address", {})
+            course_name = source.get("name", "Course Title")
+            university_name = institution.get("name", "Unknown University")
+            location = address.get('country', 'N/A')
+            course_url = source.get("url", "#")
             # source should be a valid HTML string
             merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
         merged_html += '</div>'
