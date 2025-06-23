@@ -9,7 +9,7 @@ from streamlit.components.v1 import html
 CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
 
 def render_merged_response(text_response, sources, response_placeholder):
-    """Render both text response and sources together"""
+    """Render both text response and sources together. Sources should be HTML strings for proper rendering."""
     # Start with the text response
     merged_html = f'<div class="genie-message"><strong>Genie:</strong> {text_response}</div>'
     
@@ -18,19 +18,20 @@ def render_merged_response(text_response, sources, response_placeholder):
         merged_html += '<div class="sources-section">'
         merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
         
-        # Debug: Print sources to see their structure
-        print(f"Number of sources: {len(sources)}")
-        for i, source in enumerate(sources):
-            print(f"Source {i}: {type(source)} - {str(source)[:100]}...")
-            
-            # Each source gets its own course-card div with unique styling
-            merged_html += f"""
-            <div class="course-card" style="animation-delay: {i * 0.1}s;">
+        # If you want to test HTML rendering, uncomment the following lines:
+        # sources = [
+        #     '<div class="course-title">MSc Computer Science</div><div class="course-university">University of Toronto</div><a class="course-link" href="https://utoronto.ca">View Course</a>'
+        # ]
+
+        course_content = """<div class="course-card" style="animation-delay: {i * 0.1}s;">
                 <div class="course-content">
                     {source}
                 </div>
-            </div>
-            """
+            </div>"""
+
+        for i, source in enumerate(sources):
+            # source should be a valid HTML string
+            merged_html += course_content.format(source=source)
         merged_html += '</div>'
     
     response_placeholder.markdown(merged_html, unsafe_allow_html=True)
