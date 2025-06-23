@@ -34,17 +34,20 @@ def render_merged_response(text_response, sources, response_placeholder, intent)
             </div>"""
 
         for i, source in enumerate(sources[:5]):
-            institution = source.get("institution", {})
-            address = institution.get("address", {})
-            course_name = source.get("name", "Course Title")
-            university_name = institution.get("name", "Unknown University")
-            location = address.get('country', 'N/A')
-            course_url = source.get("url", f"https://edvoy.com/institutions/{source.get("edpRefId")}/{source.get("courseLevel","").lower()}/{source.get("slug")}/")
-            university_url = source.get("url", f"https://edvoy.com/institutions/{source.get("refId")}/")
             # source should be a valid HTML string
             if intent == "UNIVERSITY_SEARCH":
-                merged_html += university_content.format(university_name=university_name,location=location,university_url=university_url)
+                university_name = source.get("name", "Unknown University")
+                address = source.get("address", {})
+                location = address.get('country', 'N/A')
+                university_url = source.get("url", f"https://edvoy.com/institutions/{source.get("refId")}/")
+                merged_html += university_content.format(university_name=course_name,location=location,university_url=university_url)
             else:
+                institution = source.get("institution", {})
+                address = institution.get("address", {})
+                course_name = source.get("name", "Course Title")
+                university_name = institution.get("name", "Unknown University")
+                location = address.get('country', 'N/A')
+                course_url = source.get("url", f"https://edvoy.com/institutions/{source.get("edpRefId")}/{source.get("courseLevel","").lower()}/{source.get("slug")}/")
                 merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
         merged_html += '</div>'
     
