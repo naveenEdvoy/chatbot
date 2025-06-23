@@ -8,26 +8,17 @@ from streamlit.components.v1 import html
 # CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
 CHATBOT_SERVICE_URL = "https://chatbot.loca.lt"
 
-def render_merged_response(text_response, sources, response_placeholder):
-    """Render both text response and sources together"""
-    # Start with the text response
-    merged_html = f'<div class="genie-message"><strong>Genie:</strong> {text_response}</div>'
+def render_search_results(sources, response_placeholder):
+    # response_placeholder.subheader("🎓 Recommended Courses & Universities")
     
-    # Add sources if they exist
-    if sources:
-        merged_html += '<div class="sources-section">'
-        # merged_html += '<h3 class="sources-header">🎓 Recommended Courses & Universities</h3>'
-        
-        for source in sources:
-            merged_html += f"""
-            <div class="course-card">
-                {source}
-            </div>
-            """
-        merged_html += '</div>'
+    for source in sources:        
+        # Render each course card
+        response_placeholder.markdown(f"""
+        <div class="course-card">
+            {source}
+        </div>
+        """, unsafe_allow_html=True)
     
-    response_placeholder.markdown(merged_html, unsafe_allow_html=True)
-
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 
 # Add some custom styling for the main app
@@ -65,15 +56,6 @@ st.markdown("""
     margin: 10px 0;
     border-left: 4px solid #764ba2;
     color: #000000;
-}
-.sources-section {
-    margin-top: 20px;
-}
-.sources-header {
-    color: #667eea;
-    font-size: 1.3em;
-    margin-bottom: 15px;
-    font-weight: bold;
 }
 .course-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -172,11 +154,7 @@ if st.session_state.history:
             if entry["sender"] == "user":
                 st.markdown(f'<div class="user-message"><strong>You:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
             else:
-                # Check if this entry has sources to display as well
-                if "sources" in entry:
-                    render_merged_response(entry["text"], entry["sources"], st)
-                else:
-                    st.markdown(f'<div class="genie-message"><strong>Genie:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="genie-message"><strong>Genie:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
 
 # Handle streaming response
 if st.session_state.task_id:
@@ -192,7 +170,6 @@ if st.session_state.task_id:
         ) as resp:
             resp.raise_for_status()
             full_response = ""
-            sources = []
             
             # Stream the response
             for line in resp.iter_lines(decode_unicode=True):
@@ -201,30 +178,24 @@ if st.session_state.task_id:
                         data = line.lstrip("data: ")
                         # Parse each line as JSON
                         chunk_data = json.loads(data)                        
-                        
-                        # Process content_chunk messages
+                        # Only process content_chunk messages
                         if chunk_data.get("type") == "content_chunk":
                             text_chunk = chunk_data.get("text_chunk", "")
                             full_response += text_chunk
-                            # Update the placeholder with accumulated response only
+                            # Update the placeholder with accumulated response
                             response_placeholder.markdown(f'<div class="genie-message"><strong>Genie:</strong> {full_response}</div>', unsafe_allow_html=True)
-                        
-                        # Process ai_response_completed messages
-                        elif chunk_data.get("type") == "ai_response_completed":
+                        if chunk_data.get("type") == "ai_response_completed":
                             sources = chunk_data["data"].get("sources", [])
-                            # Now render both text and sources together
-                            render_merged_response(full_response, sources, response_placeholder)
+                            if sources:
+                                render_search_results(sources=sources,response_placeholder=response_placeholder)
                             
                     except json.JSONDecodeError:
                         # Skip malformed JSON lines
                         continue
             
-            # Add complete response to history with sources and clear task
+            # Add complete response to history and clear task
             if full_response:
-                history_entry = {"sender": "genie", "text": full_response}
-                if sources:
-                    history_entry["sources"] = sources
-                st.session_state.history.append(history_entry)
+                st.session_state.history.append({"sender": "genie", "text": full_response})
             
         # Clear task and rerun to show final state
         st.session_state.task_id = None
