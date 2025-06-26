@@ -167,17 +167,12 @@ st.markdown("""
 .course-link {
     display: inline-block;
     background: rgba(255, 255, 255, 0.2);
-    color: white;
+    color: white !important;
     padding: 8px 16px;
     border-radius: 20px;
     text-decoration: none;
     font-weight: bold;
     transition: background 0.3s ease;
-}
-.course-link:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: white;
-    text-decoration: none;
 }
 </style>
 """, unsafe_allow_html=True)
