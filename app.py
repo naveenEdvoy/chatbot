@@ -206,7 +206,10 @@ if submitted and query.strip():
         resp = requests.post(
             f"{CHATBOT_SERVICE_URL}/chat-bot/chat",
             json={"session_id": st.session_state.session_id, "message": query,
-                  "metadata":{},"action_key":""},
+                  "metadata":{
+                      "university_name":"Aston University",
+                      "country":"United Kingdom"
+                  },"action_key":""},
             timeout=10
         )
         resp.raise_for_status()
