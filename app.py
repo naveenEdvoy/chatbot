@@ -207,7 +207,7 @@ if submitted and query.strip():
             f"{CHATBOT_SERVICE_URL}/chat-bot/chat",
             json={"session_id": st.session_state.session_id, "message": query,
                   "metadata":{
-                      "university_name":"Aston University",
+                      "university_name":"University of Derby",
                       "country":"United Kingdom"
                   },"action_key":""},
             timeout=10
