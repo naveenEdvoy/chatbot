@@ -3,7 +3,7 @@ import logging
 import streamlit as st
 import requests
 import uuid
-from streamlit.components.v1 import html
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -13,65 +13,107 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# CHATBOT_SERVICE_URL = "https://api-dev.edvoy.com"
-CHATBOT_SERVICE_URL = "http://localhost:4110"
+CHATBOT_SERVICE_URL = "https://api-qa.edvoy.com"
+# CHATBOT_SERVICE_URL = "http://localhost:4110"
 
-def render_merged_response(text_response, sources, response_placeholder, intent):
-    """Render both text response and sources together. Sources should be HTML strings for proper rendering."""
-    # Start with the text response
-    merged_html = f'<div class="genie-message"><strong>Genie:</strong> {text_response}</div>'
+def render_course_cards(sources, intent):
+    """Generate HTML for course or university sources."""
+    if not sources:
+        return ""
     
-    # Add sources if they exist
-    if sources:
-        merged_html += '<div class="sources-section">'
-        course_content = """
+    html_output = '<div class="sources-section">'
+    course_template = """
 <div class="course-card">
     <div class="course-content">
         <div class="course-title">{course_name}</div>
-        <div class="course-university">🏛️ University: {university_name}</div>
-        <div class="course-location">📍 Location: {location}</div>
+        <div class="course-university">🏛️ {university_name}</div>
+        <div class="course-location">📍 {location}</div>
         <a href="{course_url}" target="_blank" class="course-link">View Course ↗</a>
     </div>
 </div>
 """
-        
-        university_content = """
+    
+    university_template = """
 <div class="course-card">
     <div class="course-content">
         <div class="course-title">{university_name}</div>
-        <div class="course-location">📍 Location: {location}</div>
+        <div class="course-location">📍 {location}</div>
         <a href="{university_url}" target="_blank" class="course-link">View University ↗</a>
     </div>
 </div>
 """
 
-        for i, source in enumerate(sources[:5]):
-            # source should be a valid HTML string
-            if intent == "UNIVERSITY_SEARCH":
-                university_name = source.get("name", "Unknown University")
-                address = source.get("address", {})
-                location = address.get('country', 'N/A')
-                ref_id = source.get("refId", "")
-                university_url = source.get("url", f"https://edvoy.com/institutions/{ref_id}/")
-                merged_html += university_content.format(university_name=university_name,location=location,university_url=university_url)
-            else:
-                institution = source.get("institution", {})
-                address = institution.get("address", {})
-                course_name = source.get("name", "Course Title")
-                university_name = institution.get("name", "Unknown University")
-                location = address.get('country', 'N/A')
-                edp_ref_id = source.get("edpRefId", "")
-                course_level = source.get("courseLevel", "").lower()
-                slug = source.get("slug", "")
-                course_url = source.get("url", f"https://edvoy.com/institutions/{edp_ref_id}/{course_level}/{slug}/")
-                merged_html += course_content.format(course_name=course_name,university_name=university_name,location=location,course_url=course_url)
-        merged_html += '</div>'
+    for source in sources[:5]:
+        if intent == "UNIVERSITY_SEARCH":
+            university_name = source.get("name", "Unknown University")
+            address = source.get("address", {})
+            location = address.get('country', 'N/A')
+            ref_id = source.get("refId", "")
+            university_url = source.get("url", f"https://edvoy.com/institutions/{ref_id}/")
+            html_output += university_template.format(university_name=university_name, location=location, university_url=university_url)
+        else:
+            institution = source.get("institution", {})
+            address = institution.get("address", {})
+            course_name = source.get("name", "Course Title")
+            university_name = institution.get("name", "Unknown University")
+            location = address.get('country', 'N/A')
+            edp_ref_id = source.get("edpRefId", "")
+            course_level = (source.get("courseLevel") or "").lower()
+            slug = source.get("slug", "")
+            course_url = source.get("url", f"https://edvoy.com/institutions/{edp_ref_id}/{course_level}/{slug}/")
+            html_output += course_template.format(course_name=course_name, university_name=university_name, location=location, course_url=course_url)
     
-    response_placeholder.markdown(merged_html, unsafe_allow_html=True)
+    html_output += '</div>'
+    return html_output
+
+def render_message(entry, placeholder=st):
+    """Render a single message entry with all its metadata."""
+    if entry["sender"] == "user":
+        placeholder.markdown(f'<div class="user-message"><strong>You:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
+    else:
+        # Check for thinking state
+        thinking_text = entry.get("thinkingText", "")
+        text = entry.get("text", "")
+        
+        # Display Header
+        placeholder.markdown(f'<div class="genie-header"><strong>🧞‍♂️ Genie</strong></div>', unsafe_allow_html=True)
+        
+        # Thinking State (only show if no text or if it's explicitly a transition)
+        if thinking_text and not entry.get("isStreamEnded", False):
+            placeholder.markdown(f'<div class="thinking-message"><span class="pulse"></span> {thinking_text}</div>', unsafe_allow_html=True)
+        
+        if text:
+            # Render main response
+            placeholder.markdown(text)
+            
+            # Sources/Cards
+            sources = entry.get("sources", [])
+            if sources:
+                placeholder.markdown(render_course_cards(sources, entry.get("intent", "")), unsafe_allow_html=True)
+            
+            # Suggestions
+            suggestions = entry.get("suggestions", [])
+            if suggestions and entry.get("isStreamEnded", False):
+                # Using a container for suggestions to keep them grouped
+                with placeholder.container():
+                    st.write("---") # Visual separator
+                    st.caption("Suggested actions:")
+                    # Create columns for buttons to simulate chips
+                    cols = st.columns(len(suggestions) if len(suggestions) > 0 else 1)
+                    for i, sugg in enumerate(suggestions):
+                        btn_label = sugg.get("text", sugg.get("prompt", "Option"))
+                        # Use a unique key for each button
+                        if i < len(cols):
+                            if cols[i].button(btn_label, key=f"sugg_{entry.get('id', 'h')}_{i}"):
+                                st.session_state.suggestion_clicked = {
+                                    "prompt": sugg.get("prompt"),
+                                    "action": sugg.get("action")
+                                }
+                                st.rerun()
 
 st.set_page_config(page_title="Genie 🎓 Assistant", layout="wide")
 
-# Add some custom styling for the main app
+# Custom CSS
 st.markdown("""
 <style>
 .main-header {
@@ -83,108 +125,69 @@ st.markdown("""
     text-align: center;
     margin-bottom: 30px;
 }
-.chat-container {
-    max-height: 600px;
-    overflow-y: auto;
-    padding: 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
 .user-message {
     background: #f0f8ff;
-    padding: 10px;
-    border-radius: 10px;
-    margin: 10px 0;
-    border-left: 4px solid #667eea;
-    color: #000000;
+    padding: 12px 16px;
+    border-radius: 15px 15px 0 15px;
+    margin: 10px 0 10px auto;
+    border-right: 4px solid #667eea;
+    color: #1a1a1a;
+    max-width: 80%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-.genie-message {
+.genie-header {
+    color: #764ba2;
+    margin-bottom: 4px;
+    font-size: 0.9em;
+    margin-top: 15px;
+}
+.thinking-message {
     background: #f9f9f9;
-    padding: 10px;
-    border-radius: 10px;
-    margin: 10px 0;
-    border-left: 4px solid #764ba2;
-    color: #000000;
+    padding: 10px 16px;
+    border-radius: 0 15px 15px 15px;
+    border-left: 4px solid #d1d5db;
+    color: #6b7280;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-.sources-section {
-    margin-top: 20px;
+.pulse {
+    width: 8px;
+    height: 8px;
+    background-color: #d1d5db;
+    border-radius: 50%;
+    animation: pulse-animation 1.5s infinite;
 }
-.sources-header {
-    color: #667eea;
-    font-size: 1.3em;
-    margin-bottom: 15px;
-    font-weight: bold;
+@keyframes pulse-animation {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
 }
 .course-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 15px 0;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px 0;
     color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    opacity: 0;
-    animation: slideInUp 0.6s ease forwards;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-.course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-.course-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.5s;
-}
-.course-card:hover::before {
-    left: 100%;
-}
-.course-content {
-    position: relative;
-    z-index: 1;
-}
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-.course-title {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #ffffff;
-}
-.course-university {
-    font-size: 1.1em;
-    margin-bottom: 8px;
-    color: #f0f0f0;
-}
-.course-location {
-    font-size: 1em;
-    margin-bottom: 15px;
-    color: #e0e0e0;
-}
+.course-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
 .course-link {
     display: inline-block;
     background: rgba(255, 255, 255, 0.2);
     color: white !important;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 5px 12px;
+    border-radius: 15px;
     text-decoration: none;
-    font-weight: bold;
-    transition: background 0.3s ease;
+    font-size: 0.85em;
+    margin-top: 8px;
+}
+.sources-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -194,180 +197,139 @@ st.markdown('<h1 class="main-header">Genie 🎓 Study Abroad Assistant</h1>', un
 # Initialize session vars
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
-    logger.info(f"New session created: {st.session_state.session_id}")
 if "history" not in st.session_state:
     st.session_state.history = []
 if "pending_response" not in st.session_state:
     st.session_state.pending_response = False
-if "input_counter" not in st.session_state:
-    st.session_state.input_counter = 0
+if "suggestion_clicked" not in st.session_state:
+    st.session_state.suggestion_clicked = None
 
-# Create a form for better handling of input clearing
-with st.form(key="chat_form", clear_on_submit=True):
-    query = st.text_input("Ask me anything about studying abroad:", key="user_input", placeholder="e.g., I want to study Computer Science in Canada")
-    col1, col2 = st.columns([1, 5])
-    with col1:
-        submitted = st.form_submit_button("Send 🚀", use_container_width=True)
-
-# Handle form submission
-if submitted and query.strip():
+def send_message(query_text, action_key=""):
     try:
-        logger.info(f"User query received: {query[:50]}...")
-        # Add user message to history immediately
-        st.session_state.history.append({"sender": "user", "text": query})
+        logger.info(f"Sending message: {query_text[:50]}...")
+        st.session_state.history.append({"sender": "user", "text": query_text})
         
-        # Make API call
-        logger.info(f"Making API call to {CHATBOT_SERVICE_URL}/chat-bot/chat")
         resp = requests.post(
             f"{CHATBOT_SERVICE_URL}/chat-bot/chat",
             json={
                 "session_id": st.session_state.session_id,
-                "message": query,
+                "message": query_text,
                 "metadata": {
                     "university_name": "University of Derby",
                     "country": "United Kingdom"
                 },
-                "action_key": ""
+                "action_key": action_key
             },
             timeout=10
         )
         resp.raise_for_status()
-        # Mark that we're expecting a response
         st.session_state.pending_response = True
-        logger.info(f"Message sent successfully, waiting for SSE response on session: {st.session_state.session_id}")
+        st.session_state.suggestion_clicked = None
         st.rerun()
-        
-    except requests.exceptions.Timeout:
-        logger.error("Request timed out")
-        st.error("⏱️ Request timed out. Please try again.")
-        # Remove the user message from history if API call failed
-        if st.session_state.history and st.session_state.history[-1]["sender"] == "user":
-            st.session_state.history.pop()
-    except requests.exceptions.ConnectionError:
-        logger.error("Connection error - chatbot service may not be running")
-        st.error("🔌 Connection error. Please check if the chatbot service is running.")
-        # Remove the user message from history if API call failed
-        if st.session_state.history and st.session_state.history[-1]["sender"] == "user":
-            st.session_state.history.pop()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request error: {e}", exc_info=True)
-        st.error(f"❌ Error sending message: {e}")
-        # Remove the user message from history if API call failed
-        if st.session_state.history and st.session_state.history[-1]["sender"] == "user":
-            st.session_state.history.pop()
+    except Exception as e:
+        logger.error(f"Error sending message: {e}")
+        st.error(f"Failed to send message: {e}")
+
+# Handle suggestion clicks
+if st.session_state.suggestion_clicked:
+    send_message(st.session_state.suggestion_clicked["prompt"], st.session_state.suggestion_clicked["action"] or "")
+
+# Input area
+with st.container():
+    query = st.chat_input("Ask me anything about studying abroad...")
+    if query:
+        send_message(query)
 
 # Display chat history
 if st.session_state.history:
-    col1, col2 = st.columns([5, 1])
-    with col1:
-        st.subheader("💬 Chat History")
-    with col2:
-        if st.button("🗑️ Clear Chat", use_container_width=True):
-            st.session_state.history = []
-            st.session_state.pending_response = False
-            st.rerun()
-    
-    chat_container = st.container()
-    with chat_container:
-        for entry in st.session_state.history:
-            if entry["sender"] == "user":
-                st.markdown(f'<div class="user-message"><strong>You:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
-            else:
-                # Check if this entry has sources to display as well
-                if "sources" in entry:
-                    render_merged_response(entry["text"], entry["sources"], st, entry["intent"])
-                else:
-                    st.markdown(f'<div class="genie-message"><strong>Genie:</strong> {entry["text"]}</div>', unsafe_allow_html=True)
+    if st.sidebar.button("🗑️ Clear Chat"):
+        st.session_state.history = []
+        st.session_state.pending_response = False
+        st.session_state.session_id = str(uuid.uuid4()) # Start fresh
+        st.rerun()
 
-# Handle streaming response using session_id
+    for i, entry in enumerate(st.session_state.history):
+        render_message(entry)
+
+# Handle streaming response
 if st.session_state.pending_response:
-    # Create a placeholder for the streaming response
     response_placeholder = st.empty()
-    response_placeholder.markdown("*🧞‍♂️ Genie is thinking...*")
     
     try:
-        # Use session_id for SSE endpoint instead of task_id
         sse_url = f"{CHATBOT_SERVICE_URL}/chat-bot/chat-stream/{st.session_state.session_id}"
-        logger.info(f"Starting to stream response for session_id: {st.session_state.session_id}")
+        logger.info(f"Streaming from: {sse_url}")
         
-        with requests.get(
-            sse_url,
-            stream=True,
-            timeout=30
-        ) as resp:
+        with requests.get(sse_url, stream=True, timeout=30) as resp:
             resp.raise_for_status()
-            full_response = ""
-            sources = []
-            intent = ""
             
-            # Stream the response
+            # Local state for the current streaming message
+            current_msg = {
+                "id": str(uuid.uuid4()),
+                "sender": "genie",
+                "text": "",
+                "thinkingText": "Genie is thinking...",
+                "sources": [],
+                "suggestions": [],
+                "intent": "",
+                "isStreamEnded": False
+            }
+            
             for line in resp.iter_lines(decode_unicode=True):
-                if line:
-                    # Skip empty lines and heartbeat messages
-                    line = line.strip()
-                    if not line or line == ":" or line.startswith(":heartbeat"):
-                        continue
-                    
+                if line and line.startswith("data: "):
                     try:
-                        # Remove "data: " prefix if present
-                        data = line.lstrip("data: ").strip()
-                        if not data:
-                            continue
+                        data_json = line[6:].strip()
+                        if not data_json: continue
+                        
+                        chunk = json.loads(data_json)
+                        ctype = chunk.get("type")
+                        logger.debug(f"Event: {ctype}")
+                        
+                        if ctype == "status_update":
+                            current_msg["thinkingText"] = chunk.get("data", {}).get("message") or chunk.get("message") or "Thinking..."
+                        
+                        elif ctype == "content_chunk":
+                            if chunk.get("full_response_for_db"):
+                                current_msg["text"] = chunk["full_response_for_db"]
+                            elif chunk.get("text_chunk"):
+                                current_msg["text"] += chunk["text_chunk"]
+                        
+                        elif ctype == "ai_response_completed":
+                            current_msg["sources"] = chunk.get("data", {}).get("sources", [])
+                            current_msg["intent"] = chunk.get("data", {}).get("intent", "")
+                        
+                        elif ctype == "final_summary":
+                            if chunk.get("full_response_for_db"):
+                                current_msg["text"] = chunk["full_response_for_db"]
+                            elif chunk.get("data", {}).get("text"):
+                                current_msg["text"] = chunk["data"]["text"]
+                            current_msg["suggestions"] = chunk.get("data", {}).get("suggestions", [])
+                            current_msg["isStreamEnded"] = True
+                        
+                        elif ctype in ["handoff_initiated", "information_gathering_required"]:
+                            current_msg["text"] = chunk.get("full_response_for_db") or chunk.get("data", {}).get("text") or "Assistance required."
+                            current_msg["isStreamEnded"] = True
+                        
+                        elif ctype == "stream_end":
+                            current_msg["isStreamEnded"] = True
+                        
+                        elif ctype == "error":
+                            current_msg["text"] = f"Error: {chunk.get('message', 'An unknown error occurred.')}"
+                            current_msg["isStreamEnded"] = True
+
+                        # Update UI
+                        with response_placeholder.container():
+                            render_message(current_msg)
                             
-                        # Parse each line as JSON
-                        chunk_data = json.loads(data)
-                        chunk_type = chunk_data.get('type')
-                        logger.debug(f"Received chunk type: {chunk_type}")                        
-                        
-                        # Process content_chunk messages
-                        if chunk_type == "content_chunk":
-                            text_chunk = chunk_data.get("text_chunk", "")
-                            full_response += text_chunk
-                            # Update the placeholder with accumulated response only
-                            response_placeholder.markdown(f'<div class="genie-message"><strong>Genie:</strong> {full_response}</div>', unsafe_allow_html=True)
-                        
-                        # Process ai_response_completed messages
-                        elif chunk_type == "ai_response_completed":
-                            sources = chunk_data.get("data", {}).get("sources", [])
-                            intent = chunk_data.get("data", {}).get("intent", "")
-                            logger.info(f"Response completed. Intent: {intent}, Sources count: {len(sources)}")
-                            # Now render both text and sources together
-                            render_merged_response(full_response, sources, response_placeholder, intent)
-                            # Mark response as complete
+                        if current_msg["isStreamEnded"]:
+                            st.session_state.history.append(current_msg)
                             st.session_state.pending_response = False
+                            st.rerun()
                             break
-                            
-                    except json.JSONDecodeError as e:
-                        # Skip malformed JSON lines (like heartbeat messages)
-                        logger.debug(f"Skipping non-JSON line: {line[:50]}...")
+
+                    except json.JSONDecodeError:
                         continue
             
-            # Add complete response to history with sources
-            if full_response:
-                logger.info(f"Adding response to history. Length: {len(full_response)} chars")
-                history_entry = {"sender": "genie", "text": full_response}
-                history_entry["intent"] = intent
-                if sources:
-                    history_entry["sources"] = sources
-                st.session_state.history.append(history_entry)
-            
-        # Clear pending flag and rerun to show final state
+    except Exception as e:
+        logger.error(f"Stream error: {e}", exc_info=True)
         st.session_state.pending_response = False
         st.rerun()
-            
-    except requests.exceptions.Timeout:
-        logger.error("Request timed out while streaming")
-        response_placeholder.error("⏱️ Request timed out while streaming response.")
-        st.session_state.pending_response = False
-    except requests.exceptions.ConnectionError:
-        logger.error("Connection error while streaming")
-        response_placeholder.error("🔌 Connection error while streaming. Please check if the chatbot service is running.")
-        st.session_state.pending_response = False
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request error while streaming: {e}", exc_info=True)
-        response_placeholder.error(f"❌ Error streaming response: {e}")
-        st.session_state.pending_response = False
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        response_placeholder.error(f"❌ Unexpected error: {e}")
-        st.session_state.pending_response = False
