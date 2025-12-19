@@ -189,7 +189,42 @@ st.markdown("""
     gap: 15px;
     margin-top: 10px;
 }
+/* Chat container styling */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+/* Ensure input stays at bottom */
+.stChatInput {
+    position: sticky;
+    bottom: 0;
+    background-color: var(--background-color);
+    z-index: 100;
+    padding-top: 10px;
+}
+/* Auto-scroll to bottom */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
 </style>
+<script>
+function scrollToBottom() {
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+// Scroll to bottom on page load
+window.addEventListener('load', scrollToBottom);
+// Scroll to bottom when content changes
+const observer = new MutationObserver(scrollToBottom);
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
 """, unsafe_allow_html=True)
 
 st.markdown('<h1 class="main-header">Genie 🎓 Study Abroad Assistant</h1>', unsafe_allow_html=True)
@@ -234,12 +269,6 @@ def send_message(query_text, action_key=""):
 if st.session_state.suggestion_clicked:
     send_message(st.session_state.suggestion_clicked["prompt"], st.session_state.suggestion_clicked["action"] or "")
 
-# Input area
-with st.container():
-    query = st.chat_input("Ask me anything about studying abroad...")
-    if query:
-        send_message(query)
-
 # Display chat history
 if st.session_state.history:
     if st.sidebar.button("🗑️ Clear Chat"):
@@ -250,6 +279,11 @@ if st.session_state.history:
 
     for i, entry in enumerate(st.session_state.history):
         render_message(entry)
+
+# Input area - moved to bottom after chat history
+query = st.chat_input("Ask me anything about studying abroad...")
+if query:
+    send_message(query)
 
 # Handle streaming response
 if st.session_state.pending_response:
